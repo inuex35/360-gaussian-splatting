@@ -56,11 +56,13 @@ python3 train.py -s data/your_data --panorama
 
 After training, results will be saved in the `output` directory. For training parameters and more details, refer to the Gaussian Splatting repository.
 
-https://github.com/inuex35/360-gaussian-splatting/assets/129066540/44625826-29ac-494c-8dcc-b2b42f5d8cdb
-
-
-
-
+<div align="center">
+  
+  <a href="https://www.youtube.com/watch?v=AhWHeEB8-vc">
+    <img src="https://github.com/inuex35/360-gaussian-splatting/assets/129066540/25cb8760-0709-445d-a535-9885ba2786b7" width="640" alt="360 gaussian splatting with spherical render">
+  </a>
+  
+</div>
 ## Training parameter
 
 
