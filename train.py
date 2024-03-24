@@ -11,12 +11,15 @@
 
 import os
 import torch
+from PIL import Image
 from random import randint
 from utils.loss_utils import l1_loss, ssim, latitude_weight
 from gaussian_renderer import render, render_panorama, render_spherical, network_gui
 import sys
 from scene import Scene, GaussianModel
-from utils.general_utils import safe_state
+from utils.general_utils import safe_state, PILtoTorch
+from utils.general_utils import PILtoTorch
+
 import uuid
 from tqdm import tqdm
 from utils.image_utils import psnr
@@ -90,7 +93,9 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
  
         # Loss
+        viewpoint_cam.original_image = PILtoTorch(Image.open(dataset.source_path + "/images/" + viewpoint_cam.image_name), (viewpoint_cam.image_width, viewpoint_cam.image_height))
         gt_image = viewpoint_cam.original_image.cuda()
+
         mask = viewpoint_cam.is_masked
         if mask is not None:
             mask = mask.cuda()
@@ -114,7 +119,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             if iteration == opt.iterations:
                 progress_bar.close()
 
-            training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, render_spherical, (pipe, background))
+            #training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, render_spherical, (pipe, background))
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 scene.save(iteration)
@@ -140,6 +145,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             if (iteration in checkpoint_iterations):
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
                 torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
+        viewpoint_cam.original_image = None
+        
 
 def prepare_output_and_logger(args):    
     if not args.model_path:
@@ -213,11 +220,11 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=6009)
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
-    parser.add_argument("--test_iterations", nargs="+", type=int, default=[10_000, 20_000, 30_000])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[10_000, 20_000, 30_000])
+    parser.add_argument("--test_iterations", nargs="+", type=int, default=[5_000, 10_000, 15_000,20_000, 25_000, 30_000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[5_000, 10_000, 15_000,20_000, 25_000, 30_000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--panorama", action="store_true")
-    parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[10_000, 20_000, 30_000])
+    parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[5_000, 10_000, 15_000,20_000, 25_000, 30_000])
     parser.add_argument("--start_checkpoint", type=str, default = None)
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
