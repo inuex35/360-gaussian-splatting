@@ -93,7 +93,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
  
         # Loss
-        viewpoint_cam.original_image = PILtoTorch(Image.open(dataset.source_path + "/images/" + viewpoint_cam.image_name), (viewpoint_cam.image_width, viewpoint_cam.image_height))
+        viewpoint_cam.original_image = PILtoTorch(Image.open(dataset.source_path + "/images/" + viewpoint_cam.image_name).convert("RGB"), (viewpoint_cam.image_width, viewpoint_cam.image_height))
         gt_image = viewpoint_cam.original_image.cuda()
 
         mask = viewpoint_cam.is_masked
