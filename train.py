@@ -16,12 +16,13 @@ from utils.loss_utils import l1_loss, ssim, total_variation_loss, latitude_weigh
 from gaussian_renderer import render, render_panorama, render_spherical, network_gui
 import sys
 from scene import Scene, GaussianModel
-from utils.general_utils import safe_state
+from utils.general_utils import safe_state, PILtoTorch
 import uuid
 from tqdm import tqdm
 from utils.image_utils import psnr
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams
+from PIL import Image
 try:
     from torch.utils.tensorboard import SummaryWriter
     TENSORBOARD_FOUND = True
@@ -90,8 +91,10 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         image, normal, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["normals"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
         
         # Loss
+        viewpoint_cam.original_image = PILtoTorch(Image.open(dataset.source_path + "/images/" + viewpoint_cam.image_name + ".png").convert("RGB"), (viewpoint_cam.image_width, viewpoint_cam.image_height))
         gt_image = viewpoint_cam.original_image.cuda()
         try:
+            viewpoint_cam.normal = PILtoTorch(Image.open(viewpoint_cam.normal_name).convert("RGB"), (viewpoint_cam.image_width, viewpoint_cam.image_height))
             gt_normal = viewpoint_cam.normal.cuda()
         except:
             continue
@@ -147,6 +150,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             if (iteration in checkpoint_iterations):
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
                 torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
+        viewpoint_cam.original_image = None
+        viewpoint_cam.normal = None
 
 def prepare_output_and_logger(args):    
     if not args.model_path:
@@ -220,13 +225,13 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=6009)
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
-    parser.add_argument("--test_iterations", nargs="+", type=int, default=[20_000, 30_000])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[20_000, 30_000])
+    parser.add_argument("--test_iterations", nargs="+", type=int, default=[10_000, 20_000, 30_000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[10_000, 20_000, 30_000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--panorama", action="store_true")
     parser.add_argument("--depth", action="store_true")
     parser.add_argument("--normal", action="store_true")
-    parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[20_000, 30_000])
+    parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[10_000, 20_000, 30_000])
     parser.add_argument("--start_checkpoint", type=str, default = None)
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)

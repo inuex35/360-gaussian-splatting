@@ -16,11 +16,10 @@ from utils.graphics_utils import getWorld2View2, getProjectionMatrix
 
 class Camera(nn.Module):
     def __init__(self, colmap_id, R, T, FoVx, FoVy, image, depth, normal, mask, gt_alpha_mask,
-                 image_name, uid,
+                 image_name, normal_name, depth_name, uid,
                  trans=np.array([0.0, 0.0, 0.0]), scale=1.0, data_device = "cuda", panorama=False
                  ):
         super(Camera, self).__init__()
-
         self.uid = uid
         self.colmap_id = colmap_id
         self.R = R
@@ -28,6 +27,8 @@ class Camera(nn.Module):
         self.FoVx = FoVx
         self.FoVy = FoVy
         self.image_name = image_name
+        self.normal_name = normal_name
+        self.depth_name = depth_name
 
         try:
             self.data_device = torch.device(data_device)
@@ -36,19 +37,19 @@ class Camera(nn.Module):
             print(f"[Warning] Custom device {data_device} failed, fallback to default cuda device" )
             self.data_device = torch.device("cuda")
 
-        self.original_image = image.clamp(0.0, 1.0).to(self.data_device)
+        self.original_image = image.clamp(0.0, 1.0)
         self.image_width = self.original_image.shape[2]
         self.image_height = self.original_image.shape[1]
         self.raw_mask = mask
         self.is_masked = None
         if mask is not None:
             self.is_masked = (mask == 0).expand(*image.shape)  # True represent masked pixel
-            
+        """
         if gt_alpha_mask is not None:
             self.original_image *= gt_alpha_mask.to(self.data_device)
         else:
             self.original_image *= torch.ones((1, self.image_height, self.image_width), device=self.data_device)
-
+        """
         self.depth = None
         if depth is not None:
             self.depth = depth.clamp(0.0, 1.0).to(self.data_device)
@@ -60,8 +61,9 @@ class Camera(nn.Module):
         self.zfar = 100.0
         self.znear = 0.01
 
-        self.zfar = 100.0
-        self.znear = 0.01
+        self.original_image = None
+        self.normal = None
+        self.depth = None
 
         self.trans = trans
         self.scale = scale

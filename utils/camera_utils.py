@@ -73,7 +73,7 @@ def loadCam(args, id, cam_info, resolution_scale, panorama=False):
     return Camera(colmap_id=cam_info.uid, R=cam_info.R, T=cam_info.T, 
                   FoVx=cam_info.FovX, FoVy=cam_info.FovY, 
                   image=gt_image, depth=resized_depth, normal=resized_normal, mask=resized_mask, gt_alpha_mask=loaded_mask,
-                  image_name=cam_info.image_name, uid=id, data_device=args.data_device, panorama=cam_info.panorama)
+                  image_name=cam_info.image_name, normal_name=cam_info.normal_name, depth_name=cam_info.depth_name, uid=id, data_device=args.data_device, panorama=cam_info.panorama)
 
 
 def cameraList_from_camInfos(cam_infos, resolution_scale, args, panorama=False):
